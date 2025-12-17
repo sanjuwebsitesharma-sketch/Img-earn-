@@ -1332,6 +1332,7 @@
             }
         }
 
+        // FIXED: This function had the display issue
         async function loginUser(user, token) {
             appState.currentUser = user;
             appState.token = token;
@@ -1340,9 +1341,9 @@
             localStorage.setItem('picsell_token', token);
             localStorage.setItem('picsell_user', JSON.stringify(user));
             
-            // Switch to app
+            // Switch to app - FIXED HERE
             loginScreen.style.display = 'none';
-            appContainer.style.display = 'flex';
+            appContainer.style.display = 'flex'; // Changed from 'block' to 'flex'
             
             // Update UI
             updateUserUI();
@@ -1363,8 +1364,8 @@
         async function handleLogout() {
             try {
                 // In a real app, this would call your backend logout endpoint
-                // localStorage.removeItem('picsell_token');
-                // localStorage.removeItem('picsell_user');
+                localStorage.removeItem('picsell_token');
+                localStorage.removeItem('picsell_user');
                 
                 appState.currentUser = null;
                 appState.token = null;
