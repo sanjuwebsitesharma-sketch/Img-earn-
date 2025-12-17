@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Popunder ad script (first script) -->
     <script type="text/javascript" src="https://pl28275183.effectivegatecpm.com/51/4c/ee/514cee1124c64bfd3d3bfd0776dc727b.js"></script>
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
     <style>
         :root {
             --primary: #FF6B6B;
@@ -642,6 +644,117 @@
             text-decoration: underline;
         }
 
+        /* Withdrawal Section Styles */
+        .withdraw-card {
+            background: linear-gradient(135deg, #F8F9FA, white);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #E0E0E0;
+        }
+
+        .withdraw-card h3 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .withdraw-card > p {
+            color: var(--gray);
+            margin-bottom: 25px;
+        }
+
+        .withdraw-form {
+            max-width: 500px;
+        }
+
+        .paypal-button-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #F8F9FA;
+            border-radius: 12px;
+            border: 2px solid #E0E0E0;
+        }
+
+        .payment-method-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-option:hover {
+            border-color: var(--primary);
+            background: rgba(255, 107, 107, 0.05);
+        }
+
+        .payment-method-option.selected {
+            border-color: var(--primary);
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .payment-method-option i {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            width: 40px;
+            text-align: center;
+        }
+
+        .payment-method-option.paypal i {
+            color: #003087;
+        }
+
+        .payment-method-option.bank i {
+            color: var(--primary);
+        }
+
+        .payment-method-option.crypto i {
+            color: #FF9500;
+        }
+
+        .withdrawal-history {
+            margin-top: 40px;
+        }
+
+        .withdrawal-history h3 {
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .withdrawal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .withdrawal-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-pending {
+            background: var(--warning);
+            color: #333;
+        }
+
+        .status-failed {
+            background: var(--danger);
+            color: white;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .login-container {
@@ -971,7 +1084,7 @@
                 <!-- Withdrawal Section -->
                 <section class="section" id="withdrawSection">
                     <h2>Withdraw Earnings</h2>
-                    <p>Transfer your earnings to your bank account</p>
+                    <p>Transfer your earnings to your PayPal account or other payment methods</p>
                     
                     <div class="withdraw-card">
                         <h3>Available for Withdrawal: $<span id="availableBalance">0</span></h3>
@@ -980,19 +1093,56 @@
                         <div class="withdraw-form">
                             <div class="form-group">
                                 <label>Amount to Withdraw</label>
-                                <input type="number" id="withdrawAmount" class="form-control" min="10" step="0.01" placeholder="Min. $10">
+                                <input type="number" id="withdrawAmount" class="form-control" min="10" step="0.01" placeholder="Min. $10" value="10">
+                                <small style="color: var(--gray); margin-top: 5px; display: block;">Enter amount between $10 and $<span id="maxWithdrawAmount">0</span></small>
                             </div>
                             
                             <div class="form-group">
                                 <label>Payment Method</label>
-                                <select id="paymentMethod" class="form-control">
-                                    <option value="paypal">PayPal</option>
-                                    <option value="bank">Bank Transfer</option>
-                                    <option value="crypto">Cryptocurrency</option>
-                                </select>
+                                <div class="payment-method-options">
+                                    <div class="payment-method-option paypal selected" data-method="paypal">
+                                        <i class="fab fa-paypal"></i>
+                                        <div>
+                                            <strong>PayPal</strong>
+                                            <p style="color: var(--gray); font-size: 0.9rem; margin-top: 2px;">Instant transfer to your PayPal account</p>
+                                        </div>
+                                    </div>
+                                    <div class="payment-method-option bank" data-method="bank">
+                                        <i class="fas fa-university"></i>
+                                        <div>
+                                            <strong>Bank Transfer</strong>
+                                            <p style="color: var(--gray); font-size: 0.9rem; margin-top: 2px;">3-5 business days processing</p>
+                                        </div>
+                                    </div>
+                                    <div class="payment-method-option crypto" data-method="crypto">
+                                        <i class="fas fa-coins"></i>
+                                        <div>
+                                            <strong>Cryptocurrency</strong>
+                                            <p style="color: var(--gray); font-size: 0.9rem; margin-top: 2px;">BTC, ETH, USDT (5% fee)</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <button class="btn btn-primary" id="withdrawBtn">Request Withdrawal</button>
+                            <!-- PayPal Button Container -->
+                            <div class="paypal-button-container" id="paypalButtonContainer">
+                                <p style="margin-bottom: 15px; color: var(--gray);">Click the button below to withdraw via PayPal:</p>
+                                <div id="paypal-button"></div>
+                            </div>
+                            
+                            <!-- Manual Withdrawal Button (for other methods) -->
+                            <button class="btn btn-primary" id="manualWithdrawBtn" style="display: none;">
+                                <i class="fas fa-money-bill-wave"></i> Request Withdrawal
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawal History -->
+                    <div class="withdrawal-history">
+                        <h3>Recent Withdrawals</h3>
+                        <div id="withdrawalHistory">
+                            <!-- Withdrawal history will be dynamically added here -->
+                            <p style="text-align: center; color: var(--gray); padding: 20px;">No withdrawal history yet</p>
                         </div>
                     </div>
                 </section>
@@ -1003,7 +1153,7 @@
     <!-- Second ad script (inserted right before closing </body> tag) -->
     <script type="text/javascript" src="https://pl28275185.effectivegatecpm.com/d3/1d/07/d31d071514fd9061935fa6beaada246a.js"></script>
     
-    <!-- Real Authentication System -->
+    <!-- Real Authentication System with PayPal Integration -->
     <script>
         // API Configuration
         const API_CONFIG = {
@@ -1026,7 +1176,9 @@
             token: null,
             dailyLimit: 4,
             imagePrice: 2,
-            minWithdrawal: 10
+            minWithdrawal: 10,
+            selectedPaymentMethod: 'paypal',
+            paypalSDKLoaded: false
         };
 
         // DOM Elements
@@ -1108,6 +1260,17 @@
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', handleNavigation);
             });
+            
+            // Payment method selection
+            document.querySelectorAll('.payment-method-option').forEach(option => {
+                option.addEventListener('click', handlePaymentMethodSelect);
+            });
+            
+            // Manual withdrawal button
+            document.getElementById('manualWithdrawBtn').addEventListener('click', handleManualWithdrawal);
+            
+            // Withdraw amount input
+            document.getElementById('withdrawAmount').addEventListener('input', handleWithdrawAmountChange);
         }
 
         function setupPasswordToggles() {
@@ -1191,11 +1354,37 @@
                     id: Date.now(),
                     name: email.split('@')[0],
                     email: email,
-                    wallet: 0,
-                    dailyEarnings: 0,
-                    totalEarnings: 0,
-                    images: [],
-                    transactions: [],
+                    wallet: 15.50,
+                    dailyEarnings: 2,
+                    totalEarnings: 25.50,
+                    images: [
+                        {
+                            id: 1,
+                            url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400&h=200&fit=crop',
+                            name: 'landscape.jpg',
+                            status: 'approved',
+                            price: 2,
+                            uploadDate: new Date().toISOString()
+                        },
+                        {
+                            id: 2,
+                            url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=200&fit=crop',
+                            name: 'cityscape.jpg',
+                            status: 'pending',
+                            price: 2,
+                            uploadDate: new Date().toISOString()
+                        }
+                    ],
+                    transactions: [
+                        {
+                            id: 1,
+                            amount: 10,
+                            method: 'paypal',
+                            status: 'completed',
+                            date: new Date(Date.now() - 86400000 * 2).toISOString(),
+                            transactionId: 'PP123456789'
+                        }
+                    ],
                     createdAt: new Date().toISOString()
                 };
                 
@@ -1348,6 +1537,9 @@
             // Update UI
             updateUserUI();
             
+            // Initialize PayPal buttons
+            initializePayPalButtons();
+            
             // Clear forms
             loginForm.reset();
             registerForm.reset();
@@ -1407,10 +1599,27 @@
             document.getElementById('totalEarnings').textContent = user.totalEarnings.toFixed(2);
             
             // Update withdrawal section
-            document.getElementById('availableBalance').textContent = user.wallet.toFixed(2);
+            const availableBalance = user.wallet;
+            document.getElementById('availableBalance').textContent = availableBalance.toFixed(2);
+            document.getElementById('maxWithdrawAmount').textContent = availableBalance.toFixed(2);
+            
+            // Set withdraw amount to minimum or available balance
+            const withdrawAmountInput = document.getElementById('withdrawAmount');
+            withdrawAmountInput.max = availableBalance;
+            if (availableBalance >= appState.minWithdrawal) {
+                withdrawAmountInput.value = Math.min(appState.minWithdrawal, availableBalance);
+            } else {
+                withdrawAmountInput.value = '';
+            }
+            
+            // Update payment method UI
+            updatePaymentMethodUI();
             
             // Update gallery
             updateGallery();
+            
+            // Update withdrawal history
+            updateWithdrawalHistory();
         }
 
         function updateGallery() {
@@ -1439,6 +1648,38 @@
                     </div>
                 `;
                 gallery.appendChild(item);
+            });
+        }
+
+        function updateWithdrawalHistory() {
+            const historyContainer = document.getElementById('withdrawalHistory');
+            if (!historyContainer) return;
+            
+            if (!appState.currentUser || !appState.currentUser.transactions || appState.currentUser.transactions.length === 0) {
+                historyContainer.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 20px;">No withdrawal history yet</p>';
+                return;
+            }
+            
+            historyContainer.innerHTML = '';
+            
+            appState.currentUser.transactions.forEach(transaction => {
+                const item = document.createElement('div');
+                item.className = 'withdrawal-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>$${transaction.amount.toFixed(2)}</strong>
+                        <p style="color: var(--gray); font-size: 0.9rem; margin-top: 2px;">
+                            ${transaction.method.toUpperCase()} • ${new Date(transaction.date).toLocaleDateString()}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="withdrawal-status status-${transaction.status}">${transaction.status.toUpperCase()}</span>
+                        <p style="color: var(--gray); font-size: 0.8rem; margin-top: 2px; text-align: right;">
+                            ${transaction.transactionId ? 'ID: ' + transaction.transactionId : ''}
+                        </p>
+                    </div>
+                `;
+                historyContainer.appendChild(item);
             });
         }
 
@@ -1485,61 +1726,194 @@
             document.getElementById(section + 'Section').classList.add('active');
         }
 
-        // Utility Functions
-        function isValidEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
+        // Payment Method Functions
+        function handlePaymentMethodSelect(e) {
+            const method = e.currentTarget.getAttribute('data-method');
+            appState.selectedPaymentMethod = method;
+            
+            // Update UI
+            updatePaymentMethodUI();
         }
 
-        function showError(field, message) {
-            const errorElement = document.getElementById(field + 'Error');
-            const inputElement = document.getElementById(field);
+        function updatePaymentMethodUI() {
+            // Update selected state
+            document.querySelectorAll('.payment-method-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.getAttribute('data-method') === appState.selectedPaymentMethod) {
+                    option.classList.add('selected');
+                }
+            });
             
-            if (errorElement && inputElement) {
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-                inputElement.classList.add('error');
+            // Show/hide appropriate buttons
+            const paypalContainer = document.getElementById('paypalButtonContainer');
+            const manualButton = document.getElementById('manualWithdrawBtn');
+            
+            if (appState.selectedPaymentMethod === 'paypal') {
+                paypalContainer.style.display = 'block';
+                manualButton.style.display = 'none';
+                // Re-render PayPal button with current amount
+                renderPayPalButton();
+            } else {
+                paypalContainer.style.display = 'none';
+                manualButton.style.display = 'block';
+                manualButton.innerHTML = `<i class="fas fa-money-bill-wave"></i> Request ${appState.selectedPaymentMethod.toUpperCase()} Withdrawal`;
             }
         }
 
-        function clearErrors(fields) {
-            fields.forEach(field => {
-                const errorElement = document.getElementById(field + 'Error');
-                const inputElement = document.getElementById(field);
-                
-                if (errorElement) {
-                    errorElement.textContent = '';
-                    errorElement.style.display = 'none';
-                }
-                
-                if (inputElement) {
-                    inputElement.classList.remove('error');
-                }
-            });
-        }
-
-        function showMessage(message, type = 'info') {
-            messageBox.textContent = message;
-            messageBox.className = `message-box message-${type}`;
-            messageBox.style.display = 'block';
+        function handleWithdrawAmountChange(e) {
+            const amount = parseFloat(e.target.value);
+            const maxAmount = parseFloat(document.getElementById('maxWithdrawAmount').textContent);
             
-            // Auto-hide success messages after 5 seconds
-            if (type === 'success') {
-                setTimeout(() => {
-                    messageBox.style.display = 'none';
-                }, 5000);
+            if (amount > maxAmount) {
+                e.target.value = maxAmount;
+            }
+            
+            if (appState.selectedPaymentMethod === 'paypal') {
+                // Re-render PayPal button with new amount
+                renderPayPalButton();
             }
         }
 
-        function clearMessages() {
-            messageBox.style.display = 'none';
-            messageBox.textContent = '';
+        // PayPal Integration
+        function initializePayPalButtons() {
+            if (typeof paypal === 'undefined') {
+                console.error('PayPal SDK not loaded');
+                return;
+            }
+            
+            appState.paypalSDKLoaded = true;
+            renderPayPalButton();
         }
 
-        function simulateAPICall(delay) {
-            return new Promise(resolve => {
-                setTimeout(resolve, delay);
-            });
+        function renderPayPalButton() {
+            const paypalButtonContainer = document.getElementById('paypal-button');
+            if (!paypalButtonContainer) return;
+            
+            paypalButtonContainer.innerHTML = '';
+            
+            const amount = parseFloat(document.getElementById('withdrawAmount').value) || appState.minWithdrawal;
+            const walletBalance = appState.currentUser ? appState.currentUser.wallet : 0;
+            
+            if (amount < appState.minWithdrawal || amount > walletBalance) {
+                paypalButtonContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--danger);">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Amount must be between $${appState.minWithdrawal} and $${walletBalance.toFixed(2)}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: amount.toFixed(2)
+                            },
+                            description: `PicSell Withdrawal - ${appState.currentUser.email}`
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        // Process successful withdrawal
+                        processWithdrawal({
+                            amount: amount,
+                            method: 'paypal',
+                            transactionId: details.id,
+                            payerEmail: details.payer.email_address,
+                            status: 'completed'
+                        });
+                        
+                        // Show success message
+                        showMessage(`Withdrawal of $${amount.toFixed(2)} to PayPal completed successfully!`, 'success');
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    showMessage('PayPal transaction failed. Please try again.', 'error');
+                },
+                style: {
+                    layout: 'vertical',
+                    color: 'blue',
+                    shape: 'pill',
+                    label: 'paypal'
+                }
+            }).render('#paypal-button');
+        }
+
+        // Manual withdrawal for non-PayPal methods
+        async function handleManualWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = appState.selectedPaymentMethod;
+            
+            if (!amount || amount < appState.minWithdrawal) {
+                showMessage(`Minimum withdrawal amount is $${appState.minWithdrawal}`, 'error');
+                return;
+            }
+            
+            if (amount > appState.currentUser.wallet) {
+                showMessage('Insufficient balance', 'error');
+                return;
+            }
+            
+            // Simulate API call
+            const submitBtn = document.getElementById('manualWithdrawBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            try {
+                await simulateAPICall(2000);
+                
+                // Process manual withdrawal
+                processWithdrawal({
+                    amount: amount,
+                    method: method,
+                    transactionId: 'MANUAL_' + Date.now(),
+                    status: 'pending'
+                });
+                
+                showMessage(`Withdrawal request for $${amount.toFixed(2)} via ${method.toUpperCase()} submitted successfully! It will be processed within 3-5 business days.`, 'success');
+                
+            } catch (error) {
+                showMessage('Withdrawal failed. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fas fa-money-bill-wave"></i> Request ${method.toUpperCase()} Withdrawal`;
+            }
+        }
+
+        function processWithdrawal(transactionData) {
+            if (!appState.currentUser) return;
+            
+            // Deduct from wallet
+            appState.currentUser.wallet -= transactionData.amount;
+            
+            // Add transaction to history
+            const transaction = {
+                id: Date.now(),
+                amount: transactionData.amount,
+                method: transactionData.method,
+                status: transactionData.status,
+                date: new Date().toISOString(),
+                transactionId: transactionData.transactionId
+            };
+            
+            if (!appState.currentUser.transactions) {
+                appState.currentUser.transactions = [];
+            }
+            
+            appState.currentUser.transactions.unshift(transaction);
+            
+            // Save user data
+            localStorage.setItem('picsell_user', JSON.stringify(appState.currentUser));
+            
+            // Update UI
+            updateUserUI();
+            
+            // Reset form
+            document.getElementById('withdrawAmount').value = Math.min(appState.minWithdrawal, appState.currentUser.wallet);
         }
 
         // Handle image upload (from previous functionality)
@@ -1607,38 +1981,60 @@
             });
         }
 
-        // Handle withdrawal
-        const withdrawBtn = document.getElementById('withdrawBtn');
-        const withdrawAmount = document.getElementById('withdrawAmount');
-        
-        if (withdrawBtn && withdrawAmount) {
-            withdrawBtn.addEventListener('click', () => {
-                const amount = parseFloat(withdrawAmount.value);
-                const method = document.getElementById('paymentMethod').value;
+        // Utility Functions
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function showError(field, message) {
+            const errorElement = document.getElementById(field + 'Error');
+            const inputElement = document.getElementById(field);
+            
+            if (errorElement && inputElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                inputElement.classList.add('error');
+            }
+        }
+
+        function clearErrors(fields) {
+            fields.forEach(field => {
+                const errorElement = document.getElementById(field + 'Error');
+                const inputElement = document.getElementById(field);
                 
-                if (!amount || amount < appState.minWithdrawal) {
-                    showMessage(`Minimum withdrawal amount is $${appState.minWithdrawal}`, 'error');
-                    return;
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
                 }
                 
-                if (amount > appState.currentUser.wallet) {
-                    showMessage('Insufficient balance', 'error');
-                    return;
+                if (inputElement) {
+                    inputElement.classList.remove('error');
                 }
-                
-                // Process withdrawal
-                appState.currentUser.wallet -= amount;
-                
-                // Save user data
-                localStorage.setItem('picsell_user', JSON.stringify(appState.currentUser));
-                
-                // Update UI
-                updateUserUI();
-                
-                // Reset form
-                withdrawAmount.value = '';
-                
-                showMessage(`Withdrawal request for $${amount.toFixed(2)} submitted successfully!`, 'success');
+            });
+        }
+
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = `message-box message-${type}`;
+            messageBox.style.display = 'block';
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function clearMessages() {
+            messageBox.style.display = 'none';
+            messageBox.textContent = '';
+        }
+
+        function simulateAPICall(delay) {
+            return new Promise(resolve => {
+                setTimeout(resolve, delay);
             });
         }
     </script>
